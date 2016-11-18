@@ -6,25 +6,31 @@ import requests
 
 from bs4 import BeautifulSoup
 
-url_base = 'https://boston.craigslist.org/search/aap'
-params = dict(bedrooms=1)
-rsp = requests.get(url_base, params=params)
-
-# print(rsp.url)
-
 loc_prefixes = ['gbs', 'bmw', 'nos', 'nwb', 'sob']
 
-html = BeautifulSoup(rsp.text, 'html.parser')
-# print(html.prettify()[:1000])
+for loc in loc_prefixes:
 
-apts = html.find_all('p', attrs={'class': 'result-info'})
-print(len(apts))
+    url_base = 'https://boston.craigslist.org/search/{0}/aap'.format(loc)
+    params = dict(bedrooms=1)
+    rsp = requests.get(url_base, params=params)
 
-for this_appt in apts:
-    
+    # print(rsp.url)
+
+    loc_prefixes = ['gbs', 'bmw', 'nos', 'nwb', 'sob']
+
+    html = BeautifulSoup(rsp.text, 'html.parser')
+    # print(html.prettify()[:1000])
+
+    apts = html.find_all('p', attrs={'class': 'result-info'})
+    # print(len(apts))
+
+
+
+    for this_appt in apts:
+
 
         size = this_appt.findAll(attrs={'class': 'housing'})[0].text
-        print(size)
+        # print(size)
 
         def find_size_and_brs(size):
             split = size.strip(' /- \n').split(' -\n')
@@ -45,11 +51,13 @@ for this_appt in apts:
 
         this_time = this_appt.find('time')['datetime']
         this_time = pd.to_datetime(this_time)
-        this_price = float(this_appt.find('span', {'class': 'result-price'}).text.strip('$'))
+        try:
+            this_price = float(this_appt.find('span', {'class': 'result-price'}).text.strip('$'))
+        except AttributeError:
+            this_price = 9999.99
         this_title = this_appt.find('a', attrs={'class': 'hdrlnk'}).text
 
-        print(this_time, this_price, this_title)
-
+        print("%s $%6.2f %s" % (this_time, this_price, this_title))
 
 
 
